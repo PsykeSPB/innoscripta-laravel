@@ -2,8 +2,8 @@ version: "3.7"
 
 services:
   php:
-    image: php:7.4-fpm-alpine
-    working_dir: /var/www
+    build: ./docker/php
+    image: laravel_php
     volumes:
       - .:/var/www
     ports:
