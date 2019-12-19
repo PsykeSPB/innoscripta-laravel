@@ -21,4 +21,32 @@ class Order extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Get all products required in this order
+     */
+    public function products()
+    {
+        return $this->morphedByMany(Product::class, 'positionable')
+            ->using(Positionable::class)
+            ->withPivot([
+                'quantity',
+                'price_mult',
+                'price_add',
+            ]);
+    }
+
+    /**
+     * Get all services required in this order
+     */
+    public function services()
+    {
+        return $this->morphedByMany(Service::class, 'positionable')
+            ->using(Positionable::class)
+            ->withPivot([
+                'quantity',
+                'price_mult',
+                'price_add',
+            ]);
+    }
 }
