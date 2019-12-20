@@ -49,4 +49,27 @@ class Order extends Model
                 'price_add',
             ]);
     }
+
+    /**
+     * Get sum of all included products and services modified prices
+     *
+     * @return Number
+     */
+    public function getTotalCostAttribute()
+    {
+        return $this->products->concat($this->services)
+            ->map(function ($position) {
+                return $position->pivot->quantity * ( $position->pivot->price_mult * $position->price + $position->pivot->price_add );
+            })
+            ->reduce(function ($sum, $item) {
+                return $sum + $item;
+            });
+    }
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['total_cost'];
 }
