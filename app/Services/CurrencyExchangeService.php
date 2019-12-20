@@ -41,7 +41,7 @@ class CurrencyExchangeService {
 		$rates = $this->getRates();
 		$code = strtoupper($to);
 		if (array_key_exists($code, $rates)) {
-			return $rates[$code] * $value;
+			return round($rates[$code] * $value, 2);
 		} else {
 			throw new \Exception("Unknown currency code: {$to}");
 		}
