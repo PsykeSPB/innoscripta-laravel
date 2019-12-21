@@ -35,12 +35,16 @@ class OrderController extends Controller
 
     	$validator = Validator::make($request->all(), [
     		'cart' => 'required|array',
-    		'cart.*' => [ function ($attribute, $value, $fail) {
-    			$id = explode('.', $attribute)[1];
-    			if (!Product::where('id', $id)->exists()) {
-    				$fail("Product id: {$id} not found");
-    			}
-    		}],
+    		'cart.*' => [ 
+                'numeric',
+                'min:1',
+                function ($attribute, $value, $fail) {
+        			$id = explode('.', $attribute)[1];
+        			if (!Product::where('id', $id)->exists()) {
+        				$fail("Product id: {$id} not found");
+        			}
+        		},
+            ],
     	]);
 
     	if ($validator->fails()) {
