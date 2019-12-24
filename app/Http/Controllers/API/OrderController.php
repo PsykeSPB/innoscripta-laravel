@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Validator;
 use App\Services\CurrencyExchangeService as CurService;
 use App\Product;
 use App\Service;
+use App\Order;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -43,8 +45,9 @@ class OrderController extends Controller
         			if (!Product::where('id', $id)->exists()) {
         				$fail("Product id: {$id} not found");
         			}
-        		},
+        		},                
             ],
+            'address' => 'sometimes|required|string',
     	]);
 
     	if ($validator->fails()) {
@@ -62,9 +65,13 @@ class OrderController extends Controller
     			return $product;
     		});
 
-    	$services = Service::query()
-    		->where('id', 1)
-    		->get();
+        if (isset($validated['address'])) {
+        	$services = Service::query()
+        		->where('id', 1)
+        		->get();
+        } else {
+            $services = collect([]);
+        }
 
     	$total_cost = $products->reduce(function ($sum, $prod) {
     		return $sum + $prod->quantity * $prod->price;
@@ -84,6 +91,56 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-    	//
+    	$validator = Validator::make($request->all(), [
+            'cart' => 'required|array',
+            'cart.*' => [ 
+                'numeric',
+                'min:1',
+                function ($attribute, $value, $fail) {
+                    $id = explode('.', $attribute)[1];
+                    if (!Product::where('id', $id)->exists()) {
+                        $fail("Product id: {$id} not found");
+                    }
+                },                
+            ],
+            'address' => 'required|string',
+            'phone' => 'required',
+            'comment' => 'sometimes|nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $validated = $validator->valid();
+
+        try {
+
+            $order = new Order();
+            $order->phone = $validated['phone'];
+            $order->address = $validated['address'];
+            if (isset($validate['comment'])) {
+                $order->comment = $validated['comment'];
+            }
+
+            DB::transaction(function () use ($validated, &$order) {
+                $order->save();
+
+                foreach ($validated['cart'] as $id => $quantity) {
+                    $order->products()->attach($id, [
+                        'quantity' => $quantity,
+                    ]);
+                }
+
+                $order->services()->attach('1', [
+                    'quantity' => 1,
+                ]);
+            });
+
+            return response()->json($order, 200);
+
+        } catch (\Exception $e) {
+            return response()->json($e, 500);
+        }
     }
 }
