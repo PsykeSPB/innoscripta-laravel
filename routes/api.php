@@ -20,3 +20,12 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::get('/products', 'API\ProductController@index');
 Route::post('/order-service', 'API\OrderController@prepare');
 Route::put('/order-service', 'API\OrderController@store');
+
+// Only for test purposes
+Route::get('/orders', function () {
+	dump(App\Order::with('products')
+		->with('services')
+		->get()
+		->toArray()
+	);
+});
